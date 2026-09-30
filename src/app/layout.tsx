@@ -21,10 +21,10 @@ const pixelify = Pixelify_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
-  title: "itsdefrealme | Minecraft thumbnail designer",
+  title: "itsdefrealme | Minecraft Thumbnail Designer",
   description: SITE.description,
   openGraph: {
-    title: "itsdefrealme | Minecraft thumbnail designer",
+    title: "itsdefrealme | Minecraft Thumbnail Designer",
     description: SITE.description,
     type: "website",
     siteName: "itsdefrealme",
