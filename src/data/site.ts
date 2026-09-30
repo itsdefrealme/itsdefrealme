@@ -3,7 +3,7 @@ export const SITE = {
   // set SITE_URL at build time once the domain is known (used for OG links)
   url: process.env.SITE_URL ?? "http://localhost:3430",
   description:
-    "3D Minecraft thumbnails for YouTubers. From $15, delivered in 24 to 72 hours, with free revisions.",
+    "Professional Minecraft thumbnails for YouTubers. From $15 to $35, delivered in 24 to 72 hours, with free unlimited revisions.",
 };
 
 export const LINKS = {
