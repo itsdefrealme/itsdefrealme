@@ -1,0 +1,18 @@
+# code only: no assets, renders, notes or docs in this repo
+node_modules/
+.next/
+out/
+.wrangler/
+next-env.d.ts
+*.tsbuildinfo
+*.log
+
+assets-src/
+public/
+blender/out/
+blender/tex/
+src/app/*.png
+src/app/*.jpg
+*.md
+*.jpg
+*.png

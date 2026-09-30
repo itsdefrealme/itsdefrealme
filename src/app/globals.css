@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+/* One theme on purpose: the brand is a violet eye on black, and the
+   thumbnails read best on a dark wall, like YouTube's own dark mode. */
+@theme {
+  --color-bg: #0a0810;
+  --color-bg-2: #120e1b;
+  --color-bg-3: #1a1526;
+  --color-ink: #f2eefb;
+  --color-muted: #a8a1ba;
+  --color-faint: #756e89;
+  --color-line: rgb(242 238 251 / 0.1);
+  --color-accent: #8200ff;       /* his Discord banner colour */
+  --color-accent-hi: #9a2bff;
+  --color-accent-ink: #bf94ff;   /* accent as text on the dark background */
+  --color-mc-epic: #ff55ff;      /* Minecraft "epic" item name */
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-pixel: var(--font-pixelify), ui-monospace, monospace;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Corner rule: everything is square like a block. Only people's avatars
+   are round, the way Discord and YouTube show them. */
+
+html {
+  background: var(--color-bg);
+  color-scheme: dark;
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: 3px;
+}
+
+@utility wide {
+  font-variation-settings: "wdth" 118;
+}
+@utility wider {
+  font-variation-settings: "wdth" 125;
+}
+
+/* film grain, fixed and inert so it never repaints with the scroll */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Minecraft item tooltip, drawn at 2x: dark fill, an outer ring made of
+   four one-axis shadows (so the corners stay notched) and a violet gradient
+   ring on the inside */
+.mc-tooltip {
+  --mc-fill: rgb(16 0 16 / 0.94);
+  position: relative;
+  padding: 8px 10px 9px;
+  background: var(--mc-fill);
+  box-shadow:
+    0 -2px 0 var(--mc-fill),
+    0 2px 0 var(--mc-fill),
+    -2px 0 0 var(--mc-fill),
+    2px 0 0 var(--mc-fill);
+  font-family: var(--font-pixel);
+  line-height: 1.3;
+}
+.mc-tooltip::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid transparent;
+  border-image: linear-gradient(rgb(80 0 255 / 0.62), rgb(40 0 127 / 0.62)) 1;
+  pointer-events: none;
+}
+.mc-shadow-epic {
+  color: var(--color-mc-epic);
+  text-shadow: 2px 2px 0 #3f153f;
+}
+.mc-shadow-gray {
+  color: #aaaaaa;
+  text-shadow: 2px 2px 0 #2a2a2a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
