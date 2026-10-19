@@ -1,0 +1,25 @@
+HOW TO PUBLISH THIS SITE YOURSELF (plain-English version)
+
+One-time setup
+1. Install Node.js (the "LTS" version) from nodejs.org.
+2. Open a terminal inside this folder.
+3. Run:   npm install
+
+Test it on your own computer
+   npm run build
+   npx serve out
+   (open the address it prints, e.g. http://localhost:3000)
+
+Publish a TEST copy first (does NOT touch your real site)
+1. Open wrangler.jsonc and change  "name": "itsdefrealme"  to  "name": "itsdefrealme-test"
+2. Run:   npm run build
+3. Run:   npx wrangler login      (sign in to YOUR Cloudflare account)
+4. Run:   npx wrangler deploy
+5. Open the *.workers.dev address it prints and check it looks like the real site.
+
+Publish the real site
+1. Change the name in wrangler.jsonc back to "itsdefrealme"
+2. Run:   npm run build   then   npx wrangler deploy
+
+Everything (code AND images/videos) is now in this folder, so putting the whole
+folder in your GitHub repo backs up the entire site.
