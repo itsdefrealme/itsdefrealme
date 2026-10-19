@@ -1,3 +1,4 @@
+import { Loader } from "@/components/Loader";
 import { Nav } from "@/components/Nav";
 import { HeroScrub } from "@/components/HeroScrub";
 import { Work } from "@/components/Work";
@@ -7,6 +8,7 @@ import { Contact } from "@/components/Contact";
 export default function Home() {
   return (
     <>
+      <Loader />
       <Nav />
       <main>
         <HeroScrub />

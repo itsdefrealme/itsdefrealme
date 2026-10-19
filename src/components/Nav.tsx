@@ -53,7 +53,8 @@ export function Nav() {
         <a href="#top" className="group flex items-center gap-3" aria-label="itsdefrealme, back to top">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/avatar.png"
+            src="/logo.webp"
+            fetchPriority="high"
             alt=""
             width={32}
             height={32}

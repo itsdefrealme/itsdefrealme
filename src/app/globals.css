@@ -101,6 +101,84 @@ body::after {
   text-shadow: 2px 2px 0 #2a2a2a;
 }
 
+/* hero heading: Monocraft with a hard purple shadow, like Minecraft text */
+.mc-text {
+  font-family: var(--font-mc), var(--font-pixel), monospace;
+  text-shadow: 0.09em 0.09em #2b0a57;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
+/* loading screen (components/Loader.tsx). The 8 s animation is a safety net:
+   if scripts never run, CSS hides the loader anyway. */
+.loader {
+  transition: opacity 0.55s var(--ease-out), visibility 0s linear 0.55s;
+  animation: loader-fallback 0.4s 8s forwards;
+}
+.loader[data-phase="leaving"] {
+  opacity: 0;
+  visibility: hidden;
+}
+.loader-inner {
+  transition: transform 0.55s var(--ease-out);
+}
+.loader[data-phase="leaving"] .loader-inner {
+  transform: scale(0.94);
+}
+.loader-avatar {
+  animation:
+    loader-float 2.4s ease-in-out infinite,
+    loader-glow 2.4s ease-in-out infinite;
+}
+@keyframes loader-float {
+  50% {
+    transform: translateY(-6px) rotate(-3deg);
+  }
+}
+@keyframes loader-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px #ffffff1f, 0 0 22px #8200ff59;
+  }
+  50% {
+    box-shadow: 0 0 0 1px #fff3, 0 0 40px #8200ff99;
+  }
+}
+@keyframes loader-fallback {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* slow drifting purple glow over the hero (components/Embers.tsx) */
+.end-nebula::before,
+.end-nebula::after {
+  content: "";
+  opacity: 0.32;
+  will-change: transform;
+  position: absolute;
+  inset: -20%;
+}
+.end-nebula::before {
+  background: radial-gradient(38% 30% at 30% 35%, #8200ff8c, #0000 70%);
+  animation: nebula-a 26s ease-in-out infinite alternate;
+}
+.end-nebula::after {
+  background: radial-gradient(34% 28% at 72% 70%, #be78ff66, #0000 70%);
+  animation: nebula-b 34s ease-in-out infinite alternate;
+}
+@keyframes nebula-a {
+  to {
+    transform: translate(12%, 8%) scale(1.15);
+  }
+}
+@keyframes nebula-b {
+  to {
+    transform: translate(-14%, -10%) scale(1.2);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

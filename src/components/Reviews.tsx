@@ -45,8 +45,15 @@ export function Reviews() {
                       loading="lazy"
                       className="size-10 rounded-full ring-1 ring-white/10"
                     />
-                    <span className="font-semibold">{r.name}</span>
-                    <span className="text-muted">{r.subs}K subscribers</span>
+                    <a
+                      href={r.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold underline-offset-4 hover:underline"
+                    >
+                      {r.name}
+                    </a>
+                    <span className="text-muted">{r.subs} subscribers</span>
                   </figcaption>
                 </figure>
               </Reveal>

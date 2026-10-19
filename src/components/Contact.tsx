@@ -46,7 +46,7 @@ export function Contact() {
             playsInline
             preload="metadata"
             poster="/media/avatar-poster.webp"
-            aria-label="The itsdefrealme avatar rebuilt as a wall of glowing blocks"
+            aria-label="The itsdefrealme brush logo rebuilt as a wall of glowing blocks"
             className="mx-auto aspect-square w-full max-w-[520px] [mask-image:radial-gradient(closest-side,#000_78%,transparent)]"
           >
             <source src="/media/avatar-loop.webm" type="video/webm" />

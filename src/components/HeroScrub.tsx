@@ -11,6 +11,7 @@ import {
 } from "motion/react";
 import { ArrowRight, DiscordLogo } from "@phosphor-icons/react";
 import { LINKS } from "@/data/site";
+import { Embers } from "./Embers";
 
 /**
  * The hero is a Blender film (blender/scripts/hero.py) scrubbed by scroll:
@@ -18,19 +19,18 @@ import { LINKS } from "@/data/site";
  * over into a thumbnail, and the camera pushes in until it fills the screen.
  * Frames are WebP stills drawn to a canvas; they load coarse-to-fine (every
  * 16th, 8th, 4th ...) so scrubbing works long before the last one arrives.
+ *
+ * While the key frames load it reports progress with a "hero-progress"
+ * window event, which the Loader screen listens to.
  */
 
 type Variant = "desktop" | "mobile";
 type Manifest = { count: number; width: number; height: number; pattern: string; endFill: number };
 
-const STATIC_AT = 0.86;
-const END_FIT_FROM = 0.62; // push-in starts here (hero.py cam_params)
-const NAV_H = 64;
-const BG = "rgb(10 8 16)";
-const BG_CLEAR = "rgb(10 8 16 / 0)";
-const ease = (u: number) => (u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2); // frame shown with reduced motion: the finished frame on the island
+const STATIC_AT = 0.86; // frame shown with reduced motion: the finished frame on the island
 const pickVariant = (): Variant => (window.innerWidth / window.innerHeight < 0.85 ? "mobile" : "desktop");
 const frameUrl = (m: Manifest, i: number) => m.pattern.replace("%04d", String(i).padStart(4, "0"));
+const reportProgress = (v: number) => window.dispatchEvent(new CustomEvent("hero-progress", { detail: v }));
 
 function loadOrder(count: number) {
   const seen = new Set<number>();
@@ -42,8 +42,8 @@ function loadOrder(count: number) {
     }
   };
   push(0);
-  for (const stride of [16, 8, 4, 2, 1]) for (let i = 0; i < count; i += stride) push(i);
   push(count - 1);
+  for (const stride of [16, 8, 4, 2, 1]) for (let i = 0; i < count; i += stride) push(i);
   return order;
 }
 
@@ -72,26 +72,7 @@ export function HeroScrub() {
     dirty: true,
   });
 
-  // pick the frame set once, and again if the screen flips orientation
-  useEffect(() => {
-    setVariant(pickVariant());
-    let t = 0;
-    const onResize = () => {
-      window.clearTimeout(t);
-      t = window.setTimeout(() => {
-        setVariant(pickVariant());
-        player.current.dirty = true;
-        draw();
-      }, 150);
-    };
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-      window.clearTimeout(t);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  // draw the loaded frame closest to the wanted one, scaled to cover the canvas
   function draw() {
     const c = canvas.current;
     const p = player.current;
@@ -119,51 +100,36 @@ export function HeroScrub() {
       c.height = h;
     }
     const ctx = c.getContext("2d");
-    const img = p.frames[idx]!;
-    if (!ctx) return;
-    const iw = img.naturalWidth;
-    const ih = img.naturalHeight;
-
-    // Starts cover-fit. Over the push-in it eases to a size where the whole
-    // thumbnail (the last frame) fits below the nav with a margin, so the
-    // payoff is never cropped by a wide or short window.
-    const t = idx / (m.count - 1);
-    const k = ease(Math.min(1, Math.max(0, (t - END_FIT_FROM) / (1 - END_FIT_FROM))));
-    const navH = NAV_H * dpr;
-    const pad = (w < 768 * dpr ? 12 : 32) * dpr;
-    const tw = iw * m.endFill; // thumbnail size in the last frame, centred
-    const th = (tw * 9) / 16;
-    const cover = Math.max(w / iw, h / ih);
-    const fit = Math.min(cover, (w - 2 * pad) / tw, (h - navH - 2 * pad) / th);
-    const sc = cover + (fit - cover) * k;
-    const dw = iw * sc;
-    const dh = ih * sc;
-    const dx = (w - dw) / 2;
-    const dy = (h - dh) / 2 + (navH / 2) * k;
-
-    ctx.fillStyle = BG;
-    ctx.fillRect(0, 0, w, h);
+    const img = p.frames[idx];
+    if (!ctx || !img) return;
+    const k = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+    const dw = img.naturalWidth * k;
+    const dh = img.naturalHeight * k;
     ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(img, dx, dy, dw, dh);
-
-    // Soften image edges that sit inside the canvas, but never eat into the
-    // thumbnail itself: each fade is capped by the gap to the thumbnail edge.
-    const tRect = { l: dx + (dw - tw * sc) / 2, r: dx + (dw + tw * sc) / 2, t: dy + (dh - th * sc) / 2, b: dy + (dh + th * sc) / 2 };
-    const fade = (x0: number, y0: number, x1: number, y1: number, rx: number, ry: number, rw: number, rh: number) => {
-      const g = ctx.createLinearGradient(x0, y0, x1, y1);
-      g.addColorStop(0, BG);
-      g.addColorStop(1, BG_CLEAR);
-      ctx.fillStyle = g;
-      ctx.fillRect(rx, ry, rw, rh);
-    };
-    const F = 64 * dpr;
-    if (dx > 0) { const f = Math.min(F, tRect.l - dx); if (f > 1) fade(dx, 0, dx + f, 0, dx, dy, f, dh); }
-    if (dx + dw < w) { const f = Math.min(F, dx + dw - tRect.r); if (f > 1) fade(dx + dw, 0, dx + dw - f, 0, dx + dw - f, dy, f, dh); }
-    if (dy > 0) { const f = Math.min(F, tRect.t - dy); if (f > 1) fade(0, dy, 0, dy + f, dx, dy, dw, f); }
-    if (dy + dh < h) { const f = Math.min(F, dy + dh - tRect.b); if (f > 1) fade(0, dy + dh, 0, dy + dh - f, dx, dy + dh - f, dw, f); }
+    ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
     p.drawn = idx;
     p.dirty = false;
   }
+
+  // pick the frame set once, and again if the screen flips orientation
+  useEffect(() => {
+    setVariant(pickVariant());
+    let t = 0;
+    const onResize = () => {
+      window.clearTimeout(t);
+      t = window.setTimeout(() => {
+        setVariant(pickVariant());
+        player.current.dirty = true;
+        draw();
+      }, 150);
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // load the chosen frame set
   useEffect(() => {
@@ -181,11 +147,14 @@ export function HeroScrub() {
       if (dead) return;
       p.m = m;
       p.frames = new Array(m.count).fill(null);
-      p.want = reduce
-        ? Math.round(STATIC_AT * (m.count - 1))
-        : Math.round(progress.get() * (m.count - 1));
+      p.want = reduce ? Math.round(STATIC_AT * (m.count - 1)) : Math.round(progress.get() * (m.count - 1));
 
       const order = reduce ? [p.want] : loadOrder(m.count);
+      // the Loader waits for these "key" frames (every 8th, plus the last)
+      const key = new Set(reduce ? [p.want] : order.filter((i) => i % 8 === 0 || i === m.count - 1));
+      let keyLoaded = 0;
+      reportProgress(0);
+
       let next = 0;
       const worker = async () => {
         while (!dead && next < order.length) {
@@ -200,6 +169,10 @@ export function HeroScrub() {
           }
           if (dead) return;
           p.frames[i] = img;
+          if (key.has(i)) {
+            keyLoaded++;
+            reportProgress(keyLoaded / key.size);
+          }
           // redraw only if this frame is closer to the wanted one than what is on screen
           if (p.drawn < 0 || Math.abs(i - p.want) < Math.abs(p.drawn - p.want)) {
             p.dirty = true;
@@ -209,7 +182,8 @@ export function HeroScrub() {
       };
       await Promise.all(Array.from({ length: 6 }, worker));
     })().catch(() => {
-      /* the poster image stays visible if frames cannot load */
+      // frames could not load: the poster image stays visible, let the Loader go
+      reportProgress(1);
     });
 
     return () => {
@@ -248,6 +222,9 @@ export function HeroScrub() {
         </picture>
         <canvas ref={canvas} aria-hidden className="absolute inset-0 h-full w-full" />
 
+        {/* drifting particles + slow purple glow */}
+        <Embers progress={progress} />
+
         {/* legibility scrim behind the copy, gone once the film takes over */}
         <motion.div
           aria-hidden
@@ -260,13 +237,13 @@ export function HeroScrub() {
           className="relative z-10 mx-auto flex h-full max-w-[1400px] flex-col px-5 pt-24 md:justify-center md:px-8 md:pt-0"
         >
           <div className="max-w-[56rem]">
-            <h1 className="wide text-[2.35rem] leading-[1.02] font-extrabold tracking-[-0.035em] text-balance sm:text-6xl lg:text-[3.7rem] lg:text-wrap">
-              Minecraft thumbnails, <br className="hidden lg:block" />
-              built block by block.
+            <h1 className="mc-text text-[2.1rem] leading-[1.12] text-balance sm:text-5xl lg:text-[2.8rem] lg:text-wrap">
+              Minecraft Thumbnail <br className="hidden lg:block" />
+              Designer
             </h1>
-            <p className="mt-5 max-w-[36ch] text-base leading-relaxed text-muted sm:mt-6 sm:text-lg">
-              Rendered in 3D for Minecraft YouTubers. $15 to $35, delivered in 24 to 72 hours, revisions
-              free.
+            <p className="mt-5 max-w-[40ch] text-base leading-relaxed text-muted sm:mt-6 sm:text-lg">
+              Professional Minecraft Thumbnails for YouTubers. From $15 to $35, delivered in 24HRS to 72HRS, with
+              unlimited free revisions.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3 sm:mt-9">
               <a
